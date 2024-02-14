@@ -14,6 +14,7 @@ import { UUID } from 'crypto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { isUUID } from 'class-validator';
 import { ProductImage } from './entities';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -26,7 +27,7 @@ export class ProductsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     try {
       const { images = [], ...productDetails } = createProductDto;
       const product = this.productRepository.create({
@@ -34,6 +35,7 @@ export class ProductsService {
         images: images.map((image) =>
           this.productImageRespository.create({ url: image }),
         ),
+        user,
       });
       await this.productRepository.save(product);
       return { ...product, images };
@@ -81,7 +83,7 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: UUID, updateProductDto: UpdateProductDto) {
+  async update(id: UUID, updateProductDto: UpdateProductDto, user: User) {
     const { images, ...toUpdate } = updateProductDto;
 
     const product = await this.productRepository.preload({
@@ -99,6 +101,7 @@ export class ProductsService {
           this.productImageRespository.create({ url: image }),
         );
       }
+      product.user = user;
       await queryRunner.manager.save(product);
       await queryRunner.commitTransaction();
       await queryRunner.release();

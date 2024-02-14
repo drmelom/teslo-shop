@@ -14,34 +14,36 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UUID } from 'crypto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { Auth, GetUser } from 'src/auth/decorators';
+import { ValidRoles } from 'src/auth/interfaces';
+import { User } from 'src/auth/entities/user.entity';
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
-
+  @Auth(ValidRoles.admin)
   @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  create(@Body() createProductDto: CreateProductDto, @GetUser() user: User) {
+    return this.productsService.create(createProductDto, user);
   }
-
   @Get()
   findAll(@Query() paginationDto: PaginationDto) {
     return this.productsService.findAll(paginationDto);
   }
-
   @Get(':term')
   findOne(@Param('tem') term: string) {
     return this.productsService.findOnePlain(term);
   }
-
+  @Auth(ValidRoles.admin)
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: UUID,
     @Body() updateProductDto: UpdateProductDto,
+    @GetUser() user: User,
   ) {
-    return this.productsService.update(id, updateProductDto);
+    return this.productsService.update(id, updateProductDto, user);
   }
-
+  @Auth(ValidRoles.admin)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: UUID) {
     return this.productsService.remove(id);
